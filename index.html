@@ -310,8 +310,22 @@
             // Start with top stream section
             showSection('top');
             
-            // Initial fetch
-            fetchTopStream();
+            // Load favorites and initial fetch
+            renderFavorites();
+            fetchTopStream().then(() => {
+                // Update UI after initial load
+                if (mockTopStream) {
+                    topStreamEmbed.src = mockTopStream.embedUrl;
+                    topStreamerName.textContent = mockTopStream.displayName;
+                    topStreamTitle.textContent = mockTopStream.title;
+                    topStreamViewers.textContent = mockTopStream.viewers.toLocaleString();
+                    topStreamCategory.textContent = mockTopStream.category;
+                    topStreamerAvatar.src = mockTopStream.avatar;
+                    
+                    const now = new Date();
+                    lastChecked.textContent = now.toLocaleTimeString();
+                }
+            });
             
             // Set up auto-refresh
             refreshInterval = setInterval(fetchTopStream, 30 * 60 * 1000); // 30 minutes
@@ -344,27 +358,39 @@
             }
         }
 
+        // Mock top stream data
+        let mockTopStream = null;
+
         // Fetch the current top stream from Kick
         async function fetchTopStream() {
             try {
                 refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Refreshing...';
                 
-                // In a real implementation, you would call your backend API here
-                // For demo purposes, we'll simulate a response
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
                 // Only show the first favorite streamer as the "top" stream
                 if (favorites.length > 0) {
                     const firstFavorite = favorites[0];
-                    currentTopStream = {
+                    mockTopStream = {
                         name: firstFavorite.name,
                         displayName: firstFavorite.displayName,
                         title: `${firstFavorite.displayName}'s Stream`,
-                        viewers: 0,
+                        viewers: Math.floor(Math.random() * 5000) + 1000, // Random viewer count
                         category: 'Live',
                         avatar: firstFavorite.avatar,
                         embedUrl: `https://player.kick.com/${firstFavorite.name}?muted=false&autoplay=true`
                     };
+                    currentTopStream = mockTopStream;
+                } else {
+                    // Fallback if no favorites exist
+                    mockTopStream = {
+                        name: 'kick',
+                        displayName: 'Kick',
+                        title: 'Welcome to Kick TV',
+                        viewers: 0,
+                        category: 'Home',
+                        avatar: 'https://static.cdn.kick.com/web/assets/favicon-32x32.png',
+                        embedUrl: 'https://player.kick.com/kick?muted=false&autoplay=true'
+                    };
+                    currentTopStream = mockTopStream;
                 }
                 
                 // Update UI
