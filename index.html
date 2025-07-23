@@ -73,51 +73,6 @@
             border-bottom: 3px solid #ff80ab;
             color: #ff80ab !important;
         }
-        
-        .fullscreen-mode {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-            background: #1a0525;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .fullscreen-mode .header-image,
-        .fullscreen-mode .container > div:not(#top-stream-section),
-        .fullscreen-mode footer {
-            display: none;
-        }
-        
-        .fullscreen-mode #top-stream-section {
-            height: 100vh;
-            padding: 0;
-        }
-        
-        .fullscreen-mode .stream-card {
-            height: 100%;
-            border: none;
-            border-radius: 0;
-        }
-        
-        .fullscreen-mode .stream-card > div {
-            height: 100%;
-        }
-        
-        .fullscreen-mode .relative.pb-\\[56\\.25\\%\\] {
-            height: 100%;
-            padding-bottom: 0;
-        }
-        
-        .fullscreen-mode #fullscreen-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 1001;
-        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -155,27 +110,9 @@
                 <h2 class="text-2xl font-bold text-pink-500">
                     <i class="fas fa-fire mr-2"></i>Currently Most Viewed on Kick
                 </h2>
-                <div class="flex items-center space-x-2">
-                    <button id="fullscreen-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg flex items-center">
-                        <i class="fas fa-expand mr-2"></i> Fullscreen
-                    </button>
-                    <button id="refresh-btn" class="refresh-btn bg-neon-purple hover:bg-light-purple text-white px-4 py-2 rounded-full flex items-center">
-                        <i class="fas fa-sync-alt mr-2"></i> Refresh
-                    </button>
-                </div>
-            </div>
-            <div class="bg-dark-purple rounded-lg p-3 mb-4 flex justify-between items-center">
-                <div class="text-sm">
-                    <span class="text-gray-300">Update Interval:</span>
-                    <select id="refresh-interval" class="ml-2 bg-gray-800 border border-gray-700 rounded px-2 py-1">
-                        <option value="300000">5 minutes</option>
-                        <option value="1800000" selected>30 minutes</option>
-                    </select>
-                </div>
-                <div class="text-sm">
-                    <span class="text-gray-300">Total Viewers:</span>
-                    <span id="total-viewers" class="font-bold text-pink-500 ml-2">0</span>
-                </div>
+                <button id="refresh-btn" class="refresh-btn bg-neon-purple hover:bg-light-purple text-white px-4 py-2 rounded-full flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i> Refresh
+                </button>
             </div>
             
             <div class="bg-dark-purple rounded-xl p-4 mb-8 stream-card">
@@ -352,15 +289,6 @@
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
-            // Fullscreen button
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
-            
-            // Refresh interval selector
-            refreshIntervalSelect.addEventListener('change', function() {
-                refreshIntervalTime = parseInt(this.value);
-                clearInterval(refreshInterval);
-                refreshInterval = setInterval(fetchTopStream, refreshIntervalTime);
-            });
             // Start time updater
             updateTime();
             setInterval(updateTime, 1000);
@@ -484,7 +412,6 @@
                     : '<i class="fas fa-star mr-2"></i> Add to Favorites';
                 
                 refreshBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Refresh';
-                calculateTotalViewers();
                 
             } catch (error) {
                 console.error('Error fetching top stream:', error);
@@ -554,27 +481,6 @@
             // Update UI
             renderFavorites();
             showSection('favorites');
-        }
-
-        // Toggle fullscreen mode
-        function toggleFullscreen() {
-            document.body.classList.toggle('fullscreen-mode');
-            if (document.body.classList.contains('fullscreen-mode')) {
-                fullscreenBtn.innerHTML = '<i class="fas fa-compress mr-2"></i> Exit Fullscreen';
-            } else {
-                fullscreenBtn.innerHTML = '<i class="fas fa-expand mr-2"></i> Fullscreen';
-            }
-        }
-
-        // Calculate total viewers from all favorites
-        function calculateTotalViewers() {
-            let total = 0;
-            favorites.forEach(fav => {
-                if (fav.viewers) {
-                    total += fav.viewers;
-                }
-            });
-            totalViewersEl.textContent = total.toLocaleString();
         }
 
         // Render the favorites list
