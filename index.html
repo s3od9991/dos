@@ -215,7 +215,7 @@
         // Fetch data for a single channel
         async function fetchChannelData(channelName) {
             try {
-                const res = await fetch(`https://kick.com/api/v1/channels/${channelName}`);
+                const res = await fetch(`https://kick.com/api/v2/channels/${channelName}`);
                 if (!res.ok) {
                     if (res.status === 404) {
                         return {
@@ -235,7 +235,7 @@
                     name: channelName,
                     viewers: isLive ? (data.livestream?.viewer_count || 0) : 0,
                     title: isLive ? (data.livestream?.session_title || 'No title available') : 'Offline',
-                    thumbnail: data.user?.profile_pic || `https://kick.com/${channelName}`,
+                    thumbnail: data.user?.profile_pic?.url || `https://kick.com/${channelName}`,
                     isLive: isLive
                 };
             } catch (error) {
@@ -259,7 +259,7 @@
                 
                 // Update the iframe with correct embed URL
                 const isFullscreen = streamContainer.classList.contains('fullscreen');
-                streamIframe.src = `https://player.kick.com/${topStreamer.name}?autoplay=true&muted=false`;
+                streamIframe.src = `https://player.kick.com/${topStreamer.name}?autoplay=true`;
                 
                 if (!isFullscreen) {
                     streamIframe.onload = () => {
@@ -363,7 +363,7 @@
                 fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
                 // Update the stream immediately when entering fullscreen
                 if (liveChannels.length > 0) {
-                    streamIframe.src = `https://player.kick.com/${liveChannels[0].name}?autoplay=true&muted=false`;
+                    streamIframe.src = `https://kick.com/${liveChannels[0].name}/embed`;
                     streamPlaceholder.style.display = 'none';
                 }
             } else {
