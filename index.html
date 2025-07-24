@@ -58,6 +58,17 @@
       text-shadow: 0 0 4px #ffbdfd;
       white-space: nowrap;
     }
+    #skipBtn {
+      font-size: 0.75rem;
+      opacity: 1;
+      color: #ffcaff;
+      text-shadow: 0 0 4px #ffbdfd;
+      white-space: nowrap;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
     #controls button {
       background: none;
       border: none;
@@ -71,6 +82,7 @@
   <div id="controls" class="cursor-pointer transition-all" onclick="document.getElementById('fullscreenBtn').click()">
     <span id="topStreamerName">Loading...</span>
     <span id="timeDisplay" class="ml-2"></span>
+    <button id="skipBtn" class="ml-2">⏩</button>
     <button id="fullscreenBtn" class="hidden"><i class="fas fa-expand"></i></button>
   </div>
 
@@ -236,6 +248,21 @@ const cuteAsciiArts = [
       const now = new Date();
       timeDisplay.textContent = `${now.toLocaleString()} ${getRandomAsciiArt()}`;
     }
+
+    function skipToNextStream() {
+      if (liveChannels.length > 1) {
+        // Move current top stream to end of array
+        liveChannels.push(liveChannels.shift());
+        const top = liveChannels[0];
+        topStreamerName.textContent = top.name;
+        streamIframe.src = `https://player.kick.com/${top.name}?autoplay=true&muted=false`;
+      }
+    }
+
+    document.getElementById('skipBtn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      skipToNextStream();
+    });
 
     // Initial and auto refresh every 30 minutes
     updateTopStream();
