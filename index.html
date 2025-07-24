@@ -3,34 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kick Stream Watcher</title>
     <title>Kick TV V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-purple': '#2a0a4a',
+                        'light-purple': '#4b2a7a',
+                        'neon-purple': '#9c27b0',
+                        'pink-accent': '#ff80ab',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #1a0525;
+            color: #f3e5ff;
+        }
+        
+        .header-image {
+            background-image: url('https://i.imgur.com/5QzY7yJ.png');
+            background-size: cover;
+            background-position: center;
+            height: 200px;
+            border-bottom: 4px solid #9c27b0;
+            box-shadow: 0 0 20px rgba(156, 39, 176, 0.5);
         .gradient-bg {
             background: linear-gradient(135deg, #1a2e1a 0%, #2a5a2a 100%);
         }
+        
         .stream-card {
             transition: all 0.3s ease;
+            border: 2px solid #4b2a7a;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+        
         .stream-card:hover {
             transform: translateY(-5px);
+            border-color: #9c27b0;
+            box-shadow: 0 10px 20px rgba(156, 39, 176, 0.3);
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
         }
+        
+        .add-streamer-btn {
+            background: linear-gradient(45deg, #9c27b0, #ff80ab);
+            transition: all 0.3s ease;
         .kick-green {
             background-color: #2a5a2a;
         }
+        
+        .add-streamer-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(156, 39, 176, 0.7);
         .kick-light-green {
             background-color: #3a7a3a;
         }
+        
+        .refresh-btn {
+            animation: pulse 2s infinite;
         .refresh-spin {
             animation: spin 1s linear infinite;
         }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(156, 39, 176, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(156, 39, 176, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(156, 39, 176, 0); }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .tab-active {
+            border-bottom: 3px solid #ff80ab;
+            color: #ff80ab !important;
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
@@ -47,8 +102,44 @@
         }
     </style>
 </head>
+<body class="min-h-screen">
+    <!-- Header with Astolfo image -->
+    <div class="header-image relative">
+        <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+            <div class="w-full flex justify-between items-center px-4">
+                <h1 class="text-4xl md:text-5xl font-bold text-white">
+                    <span class="text-pink-500">Kick</span> TV v2
+                    <i class="fas fa-heart text-pink-500 ml-2"></i>
+                </h1>
+                <div id="current-time" class="text-xl font-semibold bg-black bg-opacity-50 px-3 py-1 rounded-lg"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main content -->
 <body class="gradient-bg text-white min-h-screen">
     <div class="container mx-auto px-4 py-8">
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-700 mb-6">
+            <button id="top-stream-tab" class="tab-active px-4 py-2 font-semibold text-lg mr-2 focus:outline-none">
+                <i class="fas fa-crown mr-2"></i>Top Stream
+            </button>
+            <button id="favorites-tab" class="px-4 py-2 font-semibold text-lg mr-2 focus:outline-none hover:text-pink-500">
+                <i class="fas fa-star mr-2"></i>Favorites
+            </button>
+            <button id="add-streamer-tab" class="px-4 py-2 font-semibold text-lg focus:outline-none hover:text-pink-500">
+                <i class="fas fa-plus-circle mr-2"></i>Add Streamer
+            </button>
+        </div>
+
+        <!-- Top Stream Section -->
+        <div id="top-stream-section">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-pink-500">
+                    <i class="fas fa-fire mr-2"></i>Currently Most Viewed on Kick
+                </h2>
+                <button id="refresh-btn" class="refresh-btn bg-neon-purple hover:bg-light-purple text-white px-4 py-2 rounded-full flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i> Refresh
         <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-8">
             <div class="flex items-center mb-4 md:mb-0">
@@ -68,6 +159,13 @@
                     <i class="fas fa-plus mr-2"></i>Add Streamer
                 </button>
             </div>
+            
+            <div class="bg-dark-purple rounded-xl p-4 mb-8 stream-card">
+                <div class="flex flex-col md:flex-row">
+                    <div class="w-full md:w-2/3 mb-4 md:mb-0 md:pr-4">
+                        <div class="relative pb-[56.25%] bg-black rounded-lg overflow-hidden">
+                            <iframe id="top-stream-embed" class="absolute top-0 left-0 w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
+                        </div>
         </header>
 
         <!-- Main Content -->
@@ -82,6 +180,14 @@
                     <div class="aspect-w-16 aspect-h-9 relative">
                         <iframe id="top-stream-embed" class="w-full h-96" src="" frameborder="0" allowfullscreen allow="autoplay"></iframe>
                     </div>
+                    <div class="w-full md:w-1/3">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden mr-3">
+                                <img id="top-streamer-avatar" src="" alt="Streamer Avatar" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h3 id="top-streamer-name" class="font-bold text-lg">Loading...</h3>
+                                <p id="top-stream-title" class="text-gray-400 text-sm">Fetching stream data...</p>
                     <div class="p-4">
                         <div class="flex justify-between items-center">
                             <h3 id="top-streamer-name" class="text-xl font-bold"></h3>
@@ -95,8 +201,45 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="bg-light-purple rounded-lg p-3 mb-3">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-300">Viewers:</span>
+                                <span id="top-stream-viewers" class="font-bold text-pink-500">0</span>
+                            </div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-300">Category:</span>
+                                <span id="top-stream-category" class="font-bold">Unknown</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-300">Last Checked:</span>
+                                <span id="last-checked" class="font-bold">Never</span>
+                            </div>
+                        </div>
+                        <button id="add-to-favorites" class="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-star mr-2"></i> Add to Favorites
+                        </button>
                     </div>
                 </div>
+            </div>
+            
+            <div class="bg-dark-purple rounded-xl p-4">
+                <h3 class="text-xl font-bold mb-4 text-center">
+                    <i class="fas fa-info-circle mr-2 text-neon-purple"></i>Your Streamers
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-light-purple p-4 rounded-lg">
+                        <div class="text-neon-purple text-2xl mb-2">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">Custom List</h4>
+                        <p class="text-sm text-gray-300">Only shows the streamers you've added to your list.</p>
+                    </div>
+                    <div class="bg-light-purple p-4 rounded-lg">
+                        <div class="text-neon-purple text-2xl mb-2">
+                            <i class="fas fa-volume-up"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">Unmuted Embed</h4>
+                        <p class="text-sm text-gray-300">Streams are automatically unmuted for immediate viewing.</p>
             </section>
 
             <!-- Streamer List -->
@@ -110,6 +253,28 @@
                         <span id="streamer-count">3</span> streamers in list
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Favorites Section (Hidden by default) -->
+        <div id="favorites-section" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-pink-500">
+                <i class="fas fa-star mr-2"></i>Your Favorite Streamers
+            </h2>
+            
+            <div id="favorites-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Default favorites will be added here -->
+            </div>
+            
+            <div id="no-favorites" class="bg-dark-purple rounded-xl p-8 text-center">
+                <i class="fas fa-star text-4xl text-gray-500 mb-4"></i>
+                <h3 class="text-xl font-bold mb-2">No Favorite Streamers Yet</h3>
+                <p class="text-gray-400 mb-4">Add streamers to your favorites to see them here!</p>
+                <button id="add-from-top" class="bg-neon-purple hover:bg-light-purple text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-plus mr-2"></i> Add from Top Stream
+                </button>
+            </div>
+        </div>
                 
                 <div id="streamer-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Streamer cards will be added here dynamically -->
@@ -117,6 +282,13 @@
             </section>
         </main>
 
+        <!-- Add Streamer Section (Hidden by default) -->
+        <div id="add-streamer-section" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-pink-500">
+                <i class="fas fa-plus-circle mr-2"></i>Add New Streamer
+            </h2>
+            
+            <div class="bg-dark-purple rounded-xl p-6">
         <!-- Add Streamer Modal -->
         <div id="add-streamer-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
             <div class="bg-kick-green rounded-lg p-6 w-full max-w-md">
@@ -127,179 +299,90 @@
                     </button>
                 </div>
                 <div class="mb-4">
+                    <label for="streamer-name" class="block text-sm font-medium mb-2">Streamer Username</label>
+                    <input type="text" id="streamer-name" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="e.g. xQc">
                     <label for="streamer-name" class="block mb-2">Streamer Username</label>
                     <input type="text" id="streamer-name" placeholder="e.g. xqc" 
                            class="w-full px-4 py-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-green-500">
                 </div>
+                <div class="flex justify-end">
+                    <button id="cancel-add" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg mr-2">
+                        Cancel
+                    </button>
+                    <button id="confirm-add" class="add-streamer-btn text-white px-6 py-2 rounded-lg">
+                        <i class="fas fa-check mr-2"></i> Add Streamer
+                    </button>
                 <div class="flex justify-end space-x-3">
                     <button id="cancel-add" class="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 transition">Cancel</button>
                     <button id="confirm-add" class="px-4 py-2 rounded bg-green-600 hover:bg-green-700 transition">Add Streamer</button>
                 </div>
             </div>
+            
+            <div class="mt-8 bg-dark-purple rounded-xl p-6">
+                <h3 class="text-xl font-bold mb-4">
+                    <i class="fas fa-question-circle text-neon-purple mr-2"></i>How to find streamers
+                </h3>
+                <p class="mb-4 text-gray-300">Enter the exact username of the Kick streamer you want to add. For example:</p>
+                <ul class="list-disc pl-5 text-gray-400 mb-4">
+                    <li class="mb-2">Go to the streamer's Kick channel</li>
+                    <li class="mb-2">Look at the URL: kick.com/<span class="text-pink-500 font-bold">streamerusername</span></li>
+                    <li class="mb-2">Enter just the username part (no spaces or special characters)</li>
+                </ul>
+                <p class="text-sm text-gray-500">Note: The streamer must be live to be added to favorites.</p>
+            </div>
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="bg-dark-purple border-t border-gray-800 py-6 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400 mb-2">
+                Made with <i class="fas fa-heart text-pink-500"></i> for Kick stream lovers
+            </p>
+            <p class="text-sm text-gray-600">
+                Not affiliated with Kick.com | Data updates every 30 minutes
+            </p>
+        </div>
+    </footer>
+
     <script>
+        // Default favorite streamers - only show these
+        const defaultFavorites = [
+            { name: 'suspendas', displayName: 'Suspendas', avatar: 'https://static-cdn.kick.com/upload/avatar/116x116/116x116-9a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a.png' },
+            { name: 'kangjoel', displayName: 'KangJoel', avatar: 'https://static-cdn.kick.com/upload/avatar/116x116/116x116-9a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a.png' },
+            { name: 'nedx', displayName: 'NedX', avatar: 'https://static-cdn.kick.com/upload/avatar/116x116/116x116-9a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a.png' },
+            { name: 'sam', displayName: 'Sam', avatar: 'https://static-cdn.kick.com/upload/avatar/116x116/116x116-9a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a.png' }
         // Default streamers
         let streamers = [
-    { name: 'Ac7ionMan', viewers: 0 },
-    { name: 'AdinRoss', viewers: 0 },
-    { name: 'AdinRossAI', viewers: 0 },
-    { name: 'ABZ', viewers: 0 },
-    { name: 'Alice_Carter09', viewers: 0 },
-    { name: 'Amelia_32', viewers: 0 },
-    { name: 'AmRay', viewers: 0 },
-    { name: 'andirayTV', viewers: 0 },
-    { name: 'animo', viewers: 0 },
-    { name: 'AnneThony', viewers: 0 },
-    { name: 'ArabAndy', viewers: 0 },
-    { name: 'AsianAndy', viewers: 0 },
-    { name: 'BabyHaze69', viewers: 0 },
-    { name: 'BaconGoddess', viewers: 0 },
-    { name: 'bennymack', viewers: 0 },
-    { name: 'bjorntv44', viewers: 0 },
-    { name: 'BlackAssDave', viewers: 0 },
-    { name: 'BlackDave', viewers: 0 },
-    { name: 'BLASTPremier', viewers: 0 },
-    { name: 'bongbong_irl', viewers: 0 },
-    { name: 'BossmanJack', viewers: 0 },
-    { name: 'BotRix', viewers: 0 },
-    { name: 'bulshaawi133', viewers: 0 },
-    { name: 'CaptainGee', viewers: 0 },
-    { name: 'carldo', viewers: 0 },
-    { name: 'Cellfmade', viewers: 0 },
-    { name: 'cheese_and_cream', viewers: 0 },
-    { name: 'ChickenAndy', viewers: 0 },
-    { name: 'CRISTRAVELS', viewers: 0 },
-    { name: 'cytate', viewers: 0 },
-    { name: 'Dariusirl', viewers: 0 },
-    { name: 'DDURANTV', viewers: 0 },
-    { name: 'Deepak', viewers: 0 },
-    { name: 'dexpuppy', viewers: 0 },
-    { name: 'Drake', viewers: 0 },
-    { name: 'edithnolan', viewers: 0 },
-    { name: 'erupi1022', viewers: 0 },
-    { name: 'Fadermag', viewers: 0 },
-    { name: 'FemboySenpaiUwU', viewers: 0 },
-    { name: 'FemboySimp', viewers: 0 },
-    { name: 'FloridaBoy', viewers: 0 },
-    { name: 'GAUTHAM02', viewers: 0 },
-    { name: 'GiJoeAZ', viewers: 0 },
-    { name: 'gotek', viewers: 0 },
-    { name: 'greekgodx', viewers: 0 },
-    { name: 'hampton_brandon', viewers: 0 },
-    { name: 'HAMPTONBRANDO', viewers: 0 },
-    { name: 'hanridge', viewers: 0 },
-    { name: 'HarrisonJRogers', viewers: 0 },
-    { name: 'hyubsama', viewers: 0 },
-    { name: 'IcePoseidon', viewers: 0 },
-    { name: 'iksde997', viewers: 0 },
-    { name: 'im_AGRi', viewers: 0 },
-    { name: 'ItsDangly', viewers: 0 },
-    { name: 'itsChloeFawn', viewers: 0 },
-    { name: 'itsHighping', viewers: 0 },
-    { name: 'ItsmeSaiman', viewers: 0 },
-    { name: 'Jackie', viewers: 0 },
-    { name: 'JackieDL', viewers: 0 },
-    { name: 'JaggyWaggyy', viewers: 0 },
-    { name: 'JAG_X', viewers: 0 },
-    { name: 'jandro', viewers: 0 },
-    { name: 'jaystreazy', viewers: 0 },
-    { name: 'jjstream', viewers: 0 },
-    { name: 'jimidycricket', viewers: 0 },
-    { name: 'JohnGaming23PH', viewers: 0 },
-    { name: 'JohnWhatsGoingOn', viewers: 0 },
-    { name: 'Jouhzu', viewers: 0 },
-    { name: 'JDanielF', viewers: 0 },
-    { name: 'JustinStakes', viewers: 0 },
-    { name: 'kaleb_green', viewers: 0 },
-    { name: 'kangjoel', viewers: 0 },
-    { name: 'Kick', viewers: 0 },
-    { name: 'kimmee', viewers: 0 },
-    { name: 'KinW0n', viewers: 0 },
-    { name: 'K_1_C_IC', viewers: 0 },
-    { name: 'Kobe0802', viewers: 0 },
-    { name: 'Lady94two', viewers: 0 },
-    { name: 'LatestXplorer', viewers: 0 },
-    { name: 'Lionqueennn', viewers: 0 },
-    { name: 'Locolouis', viewers: 0 },
-    { name: 'Louiex', viewers: 0 },
-    { name: 'LOWTIERGOD', viewers: 0 },
-    { name: 'Lunapalm', viewers: 0 },
-    { name: 'luplupka', viewers: 0 },
-    { name: 'madison_07', viewers: 0 },
-    { name: 'Mando', viewers: 0 },
-    { name: 'mariafort', viewers: 0 },
-    { name: 'marijuan', viewers: 0 },
-    { name: 'MiahFuta', viewers: 0 },
-    { name: 'MichaelDoesLife', viewers: 0 },
-    { name: 'Moises', viewers: 0 },
-    { name: 'mommymarcel', viewers: 0 },
-    { name: 'MrBasedNYC', viewers: 0 },
-    { name: 'Mskat', viewers: 0 },
-    { name: 'Muratstyle', viewers: 0 },
-    { name: 'mustileme', viewers: 0 },
-    { name: 'mhyochi12', viewers: 0 },
-    { name: 'nanatty', viewers: 0 },
-    { name: 'Nanapips', viewers: 0 },
-    { name: 'nedx', viewers: 0 },
-    { name: 'Nicktor', viewers: 0 },
-    { name: 'noobdog', viewers: 0 },
-    { name: 'OfficialEbZ', viewers: 0 },
-    { name: 'OneSonicIRL', viewers: 0 },
-    { name: 'oumb', viewers: 0 },
-    { name: 'PeggyB', viewers: 0 },
-    { name: 'perez21897', viewers: 0 },
-    { name: 'playforfun727', viewers: 0 },
-    { name: 'PoliticalFemboy', viewers: 0 },
-    { name: 'Reddemonhunterx', viewers: 0 },
-    { name: 'reportings', viewers: 0 },
-    { name: 'ReReTV', viewers: 0 },
-    { name: 'SalmonAndy', viewers: 0 },
-    { name: 'SamPanday', viewers: 0 },
-    { name: 'ScottyTea', viewers: 0 },
-    { name: 'Sean_Vibes', viewers: 0 },
-    { name: 'ShakoMako', viewers: 0 },
-    { name: 'Shoenice22', viewers: 0 },
-    { name: 'shoovy', viewers: 0 },
-    { name: 'Shotime', viewers: 0 },
-    { name: 'SIGNALBOOT', viewers: 0 },
-    { name: 'SimpLoser', viewers: 0 },
-    { name: 'sjc_official', viewers: 0 },
-    { name: 'slipz', viewers: 0 },
-    { name: 'SlyKane', viewers: 0 },
-    { name: 'Survival_Panda', viewers: 0 },
-    { name: 'Suspendas', viewers: 0 },
-    { name: 'SYNTHBREAK', viewers: 0 },
-    { name: 'TAEMIN1998', viewers: 0 },
-    { name: 'That_foo_stan', viewers: 0 },
-    { name: 'TheDirtyDogg', viewers: 0 },
-    { name: 'THISisEVAN', viewers: 0 },
-    { name: 'TinyTwink', viewers: 0 },
-    { name: 'tixerwowina', viewers: 0 },
-    { name: 'TrainWrecksAI', viewers: 0 },
-    { name: 'TurtleDestroyer', viewers: 0 },
-    { name: 'TypeWavvy', viewers: 0 },
-    { name: 'UFC', viewers: 0 },
-    { name: 'Victor', viewers: 0 },
-    { name: 'Waxiest', viewers: 0 },
-    { name: 'WestSideMike', viewers: 0 },
-    { name: 'WilliamMount', viewers: 0 },
-    { name: 'withJENNY', viewers: 0 },
-    { name: 'Wonderer1', viewers: 0 },
-    { name: 'wvagabond', viewers: 0 },
-    { name: 'w22d4204h1gh', viewers: 0 },
-    { name: 'Xanaide', viewers: 0 },
-    { name: 'Xenathewitch', viewers: 0 },
-    { name: 'YipYapDrashKing', viewers: 0 },
-    { name: 'Zprismman', viewers: 0 },
-    { name: '007IceKoreaMan102', viewers: 0 }
+            { name: 'kangjoel', viewers: 0 },
+            { name: 'sam', viewers: 0 },
+            { name: 'suspendas', viewers: 0 }
         ];
 
+        // Current top stream data
+        let currentTopStream = null;
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || defaultFavorites;
+        let refreshInterval;
+
         // DOM elements
+        const topStreamSection = document.getElementById('top-stream-section');
+        const favoritesSection = document.getElementById('favorites-section');
+        const addStreamerSection = document.getElementById('add-streamer-section');
+        const favoritesList = document.getElementById('favorites-list');
+        const noFavorites = document.getElementById('no-favorites');
         const streamerList = document.getElementById('streamer-list');
         const topStreamEmbed = document.getElementById('top-stream-embed');
         const topStreamerName = document.getElementById('top-streamer-name');
+        const topStreamTitle = document.getElementById('top-stream-title');
+        const topStreamViewers = document.getElementById('top-stream-viewers');
+        const topStreamCategory = document.getElementById('top-stream-category');
+        const topStreamerAvatar = document.getElementById('top-streamer-avatar');
+        const lastChecked = document.getElementById('last-checked');
+        const addToFavorites = document.getElementById('add-to-favorites');
+        const addFromTop = document.getElementById('add-from-top');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const streamerNameInput = document.getElementById('streamer-name');
+        const confirmAdd = document.getElementById('confirm-add');
         const topStreamerTitle = document.getElementById('top-streamer-title');
         const topStreamerViewers = document.getElementById('top-streamer-viewers');
         const streamerCount = document.getElementById('streamer-count');
@@ -308,6 +391,9 @@
         const addStreamerModal = document.getElementById('add-streamer-modal');
         const closeModal = document.getElementById('close-modal');
         const cancelAdd = document.getElementById('cancel-add');
+        const topStreamTab = document.getElementById('top-stream-tab');
+        const favoritesTab = document.getElementById('favorites-tab');
+        const addStreamerTab = document.getElementById('add-streamer-tab');
         const confirmAdd = document.getElementById('confirm-add');
         const streamerNameInput = document.getElementById('streamer-name');
         const refreshInfo = document.getElementById('refresh-info');
@@ -328,13 +414,24 @@
         }
 
         // Update current time
+        function updateTime() {
         function updateCurrentTime() {
             const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleString();
             const timeStr = now.toLocaleTimeString();
             const dateStr = now.toLocaleDateString();
             document.getElementById('current-time').textContent = `${dateStr} ${timeStr}`;
         }
 
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Start time updater
+            updateTime();
+            setInterval(updateTime, 1000);
+            // Set up tabs
+            topStreamTab.addEventListener('click', () => showSection('top'));
+            favoritesTab.addEventListener('click', () => showSection('favorites'));
+            addStreamerTab.addEventListener('click', () => showSection('add'));
         // Initialize the app
         function init() {
             renderStreamerList();
@@ -342,16 +439,26 @@
             startCountdown();
             updateCurrentTime();
             setInterval(updateCurrentTime, 1000);
-            
+
+            // Set up buttons
+            refreshBtn.addEventListener('click', fetchTopStream);
+            addToFavorites.addEventListener('click', addCurrentTopToFavorites);
+            addFromTop.addEventListener('click', addCurrentTopToFavorites);
+            confirmAdd.addEventListener('click', addNewStreamer);
+            cancelAdd.addEventListener('click', () => showSection('favorites'));
             // Set up event listeners
             addStreamerBtn.addEventListener('click', () => {
                 addStreamerModal.classList.remove('hidden');
                 streamerNameInput.focus();
             });
-            
+
+            // Load favorites
+            renderFavorites();
             closeModal.addEventListener('click', () => addStreamerModal.classList.add('hidden'));
             cancelAdd.addEventListener('click', () => addStreamerModal.classList.add('hidden'));
-            
+
+            // Start with top stream section
+            showSection('top');
             confirmAdd.addEventListener('click', () => {
                 const name = streamerNameInput.value.trim();
                 if (name && !streamers.some(s => s.name.toLowerCase() === name.toLowerCase())) {
@@ -364,14 +471,31 @@
                     alert('This streamer is already in your list!');
                 }
             });
-            
+
+            // Load favorites and initial fetch
+            renderFavorites();
+            fetchTopStream().then(() => {
+                // Update UI after initial load
+                if (mockTopStream) {
+                    topStreamEmbed.src = mockTopStream.embedUrl;
+                    topStreamerName.textContent = mockTopStream.displayName;
+                    topStreamTitle.textContent = mockTopStream.title;
+                    topStreamViewers.textContent = mockTopStream.viewers.toLocaleString();
+                    topStreamCategory.textContent = mockTopStream.category;
+                    topStreamerAvatar.src = mockTopStream.avatar;
+                    
+                    const now = new Date();
+                    lastChecked.textContent = now.toLocaleTimeString();
             // Allow Enter key to confirm add
             streamerNameInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     confirmAdd.click();
                 }
             });
-            
+
+            // Set up auto-refresh
+            refreshInterval = setInterval(fetchTopStream, 30 * 60 * 1000); // 30 minutes
+        });
             // Clicking outside modal closes it
             addStreamerModal.addEventListener('click', (e) => {
                 if (e.target === addStreamerModal) {
@@ -380,14 +504,37 @@
             });
         }
 
+        // Show the selected section
+        function showSection(section) {
+            topStreamSection.classList.add('hidden');
+            favoritesSection.classList.add('hidden');
+            addStreamerSection.classList.add('hidden');
         // Render the streamer list
         function renderStreamerList() {
             streamerList.innerHTML = '';
             streamerCount.textContent = streamers.length;
-            
+
+            topStreamTab.classList.remove('tab-active');
+            favoritesTab.classList.remove('tab-active');
+            addStreamerTab.classList.remove('tab-active');
             // Sort by viewers (descending)
             const sortedStreamers = [...streamers].sort((a, b) => b.viewers - a.viewers);
-            
+
+            switch(section) {
+                case 'top':
+                    topStreamSection.classList.remove('hidden');
+                    topStreamTab.classList.add('tab-active');
+                    break;
+                case 'favorites':
+                    favoritesSection.classList.remove('hidden');
+                    favoritesTab.classList.add('tab-active');
+                    break;
+                case 'add':
+                    addStreamerSection.classList.remove('hidden');
+                    addStreamerTab.classList.add('tab-active');
+                    streamerNameInput.focus();
+                    break;
+            }
             sortedStreamers.forEach((streamer, index) => {
                 const card = document.createElement('div');
                 card.className = 'stream-card bg-kick-light-green rounded-lg hover:bg-opacity-80 transition';
@@ -453,6 +600,8 @@
             });
         }
 
+        // Mock top stream data
+        let mockTopStream = null;
         // Remove a streamer from the list
         function removeStreamer(name) {
             if (confirm(`Remove ${name} from your list?`)) {
@@ -462,11 +611,40 @@
             }
         }
 
+        // Fetch the current top stream from Kick
+        async function fetchTopStream() {
         // Fetch data for all streamers
         async function fetchStreamerData() {
             refreshInfo.innerHTML = '<i class="fas fa-sync-alt refresh-spin mr-2"></i> Updating data...';
             
             try {
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Refreshing...';
+                
+                // Only show the first favorite streamer as the "top" stream
+                if (favorites.length > 0) {
+                    const firstFavorite = favorites[0];
+                    mockTopStream = {
+                        name: firstFavorite.name,
+                        displayName: firstFavorite.displayName,
+                        title: `${firstFavorite.displayName}'s Stream`,
+                        viewers: Math.floor(Math.random() * 5000) + 1000, // Random viewer count
+                        category: 'Live',
+                        avatar: firstFavorite.avatar,
+                        embedUrl: `https://player.kick.com/${firstFavorite.name}?muted=false&autoplay=true`
+                    };
+                    currentTopStream = mockTopStream;
+                } else {
+                    // Fallback if no favorites exist
+                    mockTopStream = {
+                        name: 'kick',
+                        displayName: 'Kick',
+                        title: 'Welcome to Kick TV',
+                        viewers: 0,
+                        category: 'Home',
+                        avatar: 'https://static.cdn.kick.com/web/assets/favicon-32x32.png',
+                        embedUrl: 'https://player.kick.com/kick?muted=false&autoplay=true'
+                    };
+                    currentTopStream = mockTopStream;
                 for (const streamer of streamers) {
                     try {
                         const res = await fetch(`https://kick.com/api/v1/channels/${streamer.name}`);
@@ -477,10 +655,38 @@
                         console.error(`Error fetching data for ${streamer.name}:`, error);
                     }
                 }
+
+                // Update UI
+                topStreamEmbed.src = mockTopStream.embedUrl;
+                topStreamerName.textContent = mockTopStream.displayName;
+                topStreamTitle.textContent = mockTopStream.title;
+                topStreamViewers.textContent = mockTopStream.viewers.toLocaleString();
+                topStreamCategory.textContent = mockTopStream.category;
+                topStreamerAvatar.src = mockTopStream.avatar;
+                
+                const now = new Date();
+                lastChecked.textContent = now.toLocaleTimeString();
+                
+                // Check if already in favorites
+                const isFavorite = favorites.some(fav => fav.name === mockTopStream.name);
+                addToFavorites.disabled = isFavorite;
+                addToFavorites.innerHTML = isFavorite 
+                    ? '<i class="fas fa-check mr-2"></i> Already in Favorites' 
+                    : '<i class="fas fa-star mr-2"></i> Add to Favorites';
+                
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Refresh';
                 
                 renderStreamerList();
                 updateTopStreamer();
             } catch (error) {
+                console.error('Error fetching top stream:', error);
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Refresh';
+                
+                // Show error in UI
+                topStreamerName.textContent = 'Error loading stream';
+                topStreamTitle.textContent = 'Failed to fetch current top stream. Please try again.';
+                topStreamViewers.textContent = '0';
+                topStreamCategory.textContent = 'Error';
                 console.error('Error fetching streamer data:', error);
             } finally {
                 // Reset the refresh countdown
@@ -488,6 +694,42 @@
             }
         }
 
+        // Add current top stream to favorites
+        function addCurrentTopToFavorites() {
+            if (!currentTopStream) return;
+            
+            // Check if already in favorites
+            const alreadyExists = favorites.some(fav => fav.name === currentTopStream.name);
+            if (alreadyExists) return;
+            
+            // Add to favorites
+            favorites.push({
+                name: currentTopStream.name,
+                displayName: currentTopStream.displayName,
+                avatar: currentTopStream.avatar
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            
+            // Update UI
+            renderFavorites();
+            showSection('favorites');
+            
+            // Update add button in top stream section
+            addToFavorites.disabled = true;
+            addToFavorites.innerHTML = '<i class="fas fa-check mr-2"></i> Already in Favorites';
+        }
+
+        // Add new streamer from input
+        function addNewStreamer() {
+            const streamerName = streamerNameInput.value.trim();
+            if (!streamerName) return;
+            
+            // Check if already in favorites
+            const alreadyExists = favorites.some(fav => fav.name.toLowerCase() === streamerName.toLowerCase());
+            if (alreadyExists) {
+                alert('This streamer is already in your favorites!');
         // Update the top streamer display
         function updateTopStreamer() {
             if (streamers.length === 0) {
@@ -497,21 +739,35 @@
                 topStreamerViewers.textContent = '0';
                 return;
             }
-            
+
+            // In a real app, you would verify the streamer exists and is live
+            // For demo, we'll just add it
+            favorites.push({
+                name: streamerName,
+                displayName: streamerName.charAt(0).toUpperCase() + streamerName.slice(1),
+                avatar: `https://kick.com/${streamerName}`
+            });
             // Find the streamer with most viewers
             const topStreamer = streamers.reduce((prev, current) => 
                 (prev.viewers > current.viewers) ? prev : current
             );
-            
+
+            // Save to localStorage
+            localStorage.setItem('favorites', JSON.stringify(favorites));
             // Check if currently in fullscreen
             const isFullscreen = document.fullscreenElement === topStreamEmbed;
-            
+
+            // Clear input
+            streamerNameInput.value = '';
             // Update the top streamer display
             topStreamEmbed.src = `https://player.kick.com/${topStreamer.name}?muted=false`;
             topStreamerName.textContent = topStreamer.name;
             topStreamerTitle.textContent = topStreamer.title;
             topStreamerViewers.textContent = topStreamer.viewers.toLocaleString();
-            
+
+            // Update UI
+            renderFavorites();
+            showSection('favorites');
             // Re-enter fullscreen if we were in fullscreen before
             if (isFullscreen) {
                 setTimeout(() => {
@@ -520,6 +776,36 @@
             }
         }
 
+        // Render the favorites list
+        function renderFavorites() {
+            favoritesList.innerHTML = '';
+            
+            if (favorites.length === 0) {
+                noFavorites.classList.remove('hidden');
+                return;
+            }
+            
+            noFavorites.classList.add('hidden');
+            
+            favorites.forEach(streamer => {
+                const streamerCard = document.createElement('div');
+                streamerCard.className = 'bg-light-purple rounded-lg p-4 stream-card';
+                streamerCard.innerHTML = `
+                    <div class="flex items-center mb-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden mr-3">
+                            <img src="${streamer.avatar}" alt="${streamer.displayName}" class="w-full h-full object-cover">
+                        </div>
+                        <h3 class="font-bold">${streamer.displayName}</h3>
+                    </div>
+                    <div class="flex justify-between">
+                        <a href="https://kick.com/${streamer.name}" target="_blank" class="bg-neon-purple hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">
+                            <i class="fas fa-external-link-alt mr-1"></i> Visit
+                        </a>
+                        <button class="remove-favorite bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm" data-name="${streamer.name}">
+                            <i class="fas fa-trash-alt mr-1"></i> Remove
+                        </button>
+                    </div>
+                `;
         // Countdown timer for auto-refresh
         let countdownInterval;
         let secondsLeft = 30 * 60; // 30 minutes
@@ -528,7 +814,17 @@
             clearInterval(countdownInterval);
             countdownInterval = setInterval(() => {
                 secondsLeft--;
-                
+
+                favoritesList.appendChild(streamerCard);
+            });
+            
+            // Add event listeners to remove buttons
+            document.querySelectorAll('.remove-favorite').forEach(button => {
+                button.addEventListener('click', function() {
+                    const streamerName = this.getAttribute('data-name');
+                    removeFavorite(streamerName);
+                });
+            });
                 if (secondsLeft <= 0) {
                     fetchStreamerData();
                     return;
@@ -539,6 +835,18 @@
                 countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }, 1000);
         }
+
+        // Remove a streamer from favorites
+        function removeFavorite(streamerName) {
+            favorites = favorites.filter(fav => fav.name !== streamerName);
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            renderFavorites();
+            
+            // If we removed the current top stream, update its add button
+            if (currentTopStream && currentTopStream.name === streamerName) {
+                addToFavorites.disabled = false;
+                addToFavorites.innerHTML = '<i class="fas fa-star mr-2"></i> Add to Favorites';
+            }
         
         function resetCountdown() {
             secondsLeft = 30 * 60;
