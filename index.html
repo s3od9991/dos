@@ -1,390 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kick Stream Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <style>
-        .stream-container {
-            transition: all 0.3s ease;
-        }
-        .fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-            background: black;
-        }
-        .stream-iframe {
-            aspect-ratio: 16/9;
-        }
-        .channel-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-        .viewer-count {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-        .refresh-animation {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kick Viewer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      background: black;
+      color: white;
+      font-family: sans-serif;
+      height: 100%;
+      overflow: hidden;
+    }
+    #streamContainer.fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      background: black;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1001;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 6px 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #controls button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <div class="flex items-center gap-4">
-                <img src="https://kick.com/favicon.ico" alt="Kick Logo" class="w-10 h-10">
-                <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-                    Kick Stream Dashboard
-                </h1>
-            </div>
-            <div class="flex items-center gap-4">
-                <div class="flex items-center bg-gray-800 rounded-lg px-4 py-2">
-                    <span id="lastUpdated" class="text-sm">Last updated: Never</span>
-                    <button id="refreshBtn" class="ml-2 text-blue-400 hover:text-blue-300 transition">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
-                <div class="bg-gray-800 rounded-lg px-4 py-2 hidden md:block">
-                    <span class="text-sm">Next update in: <span id="countdown">30:00</span></span>
-                </div>
-            </div>
-        </header>
+<body>
 
-        <div id="topStreamer" class="mb-8 rounded-xl overflow-hidden shadow-lg bg-gray-800">
-            <div class="p-4 bg-gradient-to-r from-purple-900 to-pink-800 flex justify-between items-center">
-                <h2 class="text-xl font-bold">🔥 Currently Live: <span id="topStreamerName">Loading...</span></h2>
-                <div class="flex items-center gap-2">
-                    <span id="topStreamerViewers" class="bg-black bg-opacity-30 px-3 py-1 rounded-full text-sm flex items-center">
-                        <i class="fas fa-eye mr-1"></i> <span>0</span> viewers
-                    </span>
-                    <button id="fullscreenBtn" class="bg-black bg-opacity-30 hover:bg-opacity-50 px-3 py-1 rounded-full text-sm transition">
-                        <i class="fas fa-expand"></i> Fullscreen
-                    </button>
-                </div>
-            </div>
-            <div id="streamContainer" class="stream-container relative">
-                <div class="aspect-w-16 aspect-h-9">
-                    <iframe id="streamIframe" class="w-full h-full" src="" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
-                </div>
-                <div id="streamPlaceholder" class="absolute inset-0 bg-gray-700 flex items-center justify-center">
-                    <div class="text-center">
-                        <i class="fas fa-spinner fa-spin text-4xl mb-4 text-purple-400"></i>
-                        <p>Loading top stream...</p>
-                    </div>
-                </div>
-            </div>
-            <div class="p-4 bg-gray-800 border-t border-gray-700">
-                <h3 id="streamTitle" class="text-lg font-semibold truncate">Stream title will appear here</h3>
-            </div>
-        </div>
+  <div id="controls">
+    <span id="topStreamerName" class="font-bold">Loading...</span>
+    <button id="fullscreenBtn"><i class="fas fa-expand"></i></button>
+  </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-            <div class="col-span-full bg-gray-800 rounded-lg p-4">
-                <h2 class="text-xl font-bold mb-4">Live Channels</h2>
-                <div id="liveChannels" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <!-- Live channels will be inserted here -->
-                </div>
-            </div>
-        </div>
+  <div id="streamContainer" class="fullscreen">
+    <iframe id="streamIframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
+  </div>
 
-    </div>
+  <script>
+    const streamIframe = document.getElementById("streamIframe");
 
-    <script>
-        // List of channels to track
-        const channels = [
-            "Ac7ionMan", "AdinRoss", "AdinRossAI", "ABZ", "Alice_Carter09", "Amelia_32", "AmRay", "andirayTV", 
-            "animo", "AnneThony", "ArabAndy", "AsianAndy", "BabyHaze69", "BaconGoddess", "bennymack", 
-            "bjorntv44", "BlackAssDave", "BlackDave", "BLASTPremier", "bongbong_irl", "BossmanJack", 
-            "BotRix", "bulshaawi133", "CaptainGee", "carldo", "Cellfmade", "cheese_and_cream", 
-            "ChickenAndy", "CRISTRAVELS", "cytate", "Dariusirl", "DDURANTV", "Deepak", "dexpuppy", 
-            "Drake", "edithnolan", "erupi1022", "Fadermag", "FemboySenpaiUwU", "FemboySimp", 
-            "FloridaBoy", "GAUTHAM02", "GiJoeAZ", "gotek", "greekgodx", "hampton_brandon", 
-            "HAMPTONBRANDO", "hanridge", "HarrisonJRogers", "hyubsama", "IcePoseidon", "iksde997", 
-            "im_AGRi", "ItsDangly", "itsChloeFawn", "itsHighping", "ItsmeSaiman", "Jackie", 
-            "JackieDL", "JaggyWaggyy", "JAG_X", "jandro", "jaystreazy", "jjstream", "jimidycricket", 
-            "JohnGaming23PH", "JohnWhatsGoingOn", "Jouhzu", "JDanielF", "JustinStakes", "kaleb_green", 
-            "kangjoel", "Kick", "kimmee", "KinW0n", "K_1_C_IC", "Kobe0802", "Lady94two", 
-            "LatestXplorer", "Lionqueennn", "Locolouis", "Louiex", "LOWTIERGOD", "Lunapalm", 
-            "luplupka", "madison_07", "Mando", "mariafort", "marijuan", "MiahFuta", "MichaelDoesLife", 
-            "Moises", "mommymarcel", "MrBasedNYC", "Mskat", "Muratstyle", "mustileme", "mhyochi12", 
-            "nanatty", "Nanapips", "nedx", "Nicktor", "noobdog", "OfficialEbZ", "OneSonicIRL", 
-            "oumb", "PeggyB", "perez21897", "playforfun727", "PoliticalFemboy", "Reddemonhunterx", 
-            "reportings", "ReReTV", "SalmonAndy", "SamPanday", "ScottyTea", "Sean_Vibes", "ShakoMako", 
-            "Shoenice22", "shoovy", "Shotime", "SIGNALBOOT", "SimpLoser", "sjc_official", "slipz", 
-            "SlyKane", "Survival_Panda", "Suspendas", "SYNTHBREAK", "TAEMIN1998", "That_foo_stan", 
-            "TheDirtyDogg", "THISisEVAN", "TinyTwink", "tixerwowina", "TrainWrecksAI", 
-            "TurtleDestroyer", "TypeWavvy", "UFC", "Victor", "Waxiest", "WestSideMike", 
-            "WilliamMount", "withJENNY", "Wonderer1", "wvagabond", "w22d4204h1gh", "Xanaide", 
-            "Xenathewitch", "YipYapDrashKing", "Zprismman", "007IceKoreaMan102"
-        ];
+    const channels = [
+      "ac7tionman", "Adinross", "abz", "asianandy", "babyhaze69", "bennymack", 
+      "blackassdave", "captaingee", "cellfmade", "chickenandy", "cristravels", 
+      "dariusirl", "kangjoel", "hamptonbrando", "hyubsama", "Iceposeidon", 
+      "jandro", "jjstream", "lowtiergod", "mando", "noobdog", "sampanday"
+    ];
 
-        let liveChannels = [];
-        let updateInterval = 30 * 60 * 1000; // 30 minutes in milliseconds
-        let countdownInterval;
-        let countdownTime = 30 * 60; // 30 minutes in seconds
+    let liveChannels = [];
 
-        // DOM elements
-        const topStreamerName = document.getElementById('topStreamerName');
-        const topStreamerViewers = document.getElementById('topStreamerViewers');
-        const streamIframe = document.getElementById('streamIframe');
-        const streamPlaceholder = document.getElementById('streamPlaceholder');
-        const streamTitle = document.getElementById('streamTitle');
-        const liveChannelsContainer = document.getElementById('liveChannels');
-        const allChannelsContainer = document.getElementById('allChannels');
-        const lastUpdated = document.getElementById('lastUpdated');
-        const refreshBtn = document.getElementById('refreshBtn');
-        const countdown = document.getElementById('countdown');
-        const streamContainer = document.getElementById('streamContainer');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
+    async function fetchChannelData(channel) {
+      try {
+        const res = await fetch(`https://kick.com/api/v1/channels/${channel}`);
+        const data = await res.json();
+        const isLive = data.livestream?.is_live || false;
+        return {
+          name: channel,
+          isLive,
+          viewers: data.livestream?.viewer_count || 0,
+        };
+      } catch (e) {
+        return { name: channel, isLive: false };
+      }
+    }
 
-        // Initialize the dashboard
-        document.addEventListener('DOMContentLoaded', () => {
-            updateStreamData();
-            startCountdown();
-        });
+    async function updateTopStream() {
+      liveChannels = [];
 
-        // Fetch viewer data for all channels sequentially
-        async function updateStreamData() {
-            try {
-                refreshBtn.classList.add('refresh-animation');
-                liveChannels = [];
-                let processed = 0;
-                const total = channels.length;
-                
-                // Create progress indicator
-                const progress = document.createElement('div');
-                progress.className = 'absolute top-4 right-4 bg-gray-800 bg-opacity-90 px-3 py-1 rounded text-sm';
-                progress.innerHTML = `Loading: 0/${total}`;
-                document.body.appendChild(progress);
-                
-                // Process channels one by one with delay
-                for (const channel of channels) {
-                    try {
-                        const data = await fetchChannelData(channel);
-                        if (data.isLive) {
-                            liveChannels.push(data);
-                            // Update UI after each live channel is found
-                            if (liveChannels.length <= 8) {
-                                updateTopStreamer();
-                                updateLiveChannelsList();
-                            }
-                        }
-                        processed++;
-                        progress.innerHTML = `Loading: ${processed}/${total}`;
-                        
-                        // Small delay between requests to prevent rate limiting
-                        if (processed < total) {
-                            await new Promise(resolve => setTimeout(resolve, 200));
-                        }
-                    } catch (err) {
-                        console.error(`Error processing ${channel}:`, err);
-                        processed++;
-                    }
-                }
-                
-                // Final sort and update
-                liveChannels.sort((a, b) => b.viewers - a.viewers);
-                updateTopStreamer();
-                updateLiveChannelsList();
-                updateLastUpdatedTime();
-                resetCountdown();
-                
-            } catch (error) {
-                console.error('Error updating stream data:', error);
-            } finally {
-                refreshBtn.classList.remove('refresh-animation');
-                document.querySelectorAll('.absolute.top-4.right-4').forEach(el => el.remove());
-            }
-        }
+      for (const ch of channels) {
+        const data = await fetchChannelData(ch);
+        if (data.isLive) liveChannels.push(data);
+      }
 
-        // Fetch data for a single channel
-        async function fetchChannelData(channelName) {
-            try {
-                const res = await fetch(`https://kick.com/api/v2/channels/${channelName}`);
-                if (!res.ok) {
-                    if (res.status === 404) {
-                        return {
-                            name: channelName,
-                            viewers: 0,
-                            title: 'Channel not found',
-                            thumbnail: `https://via.placeholder.com/150?text=${channelName}`,
-                            isLive: false
-                        };
-                    }
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                
-                const data = await res.json();
-                const isLive = data.livestream?.is_live || false;
-                return {
-                    name: channelName,
-                    viewers: isLive ? (data.livestream?.viewer_count || 0) : 0,
-                    title: isLive ? (data.livestream?.session_title || 'No title available') : 'Offline',
-                    thumbnail: data.user?.profile_pic?.url || `https://kick.com/${channelName}`,
-                    isLive: isLive
-                };
-            } catch (error) {
-                console.error(`Error fetching data for ${channelName}:`, error);
-                return {
-                    name: channelName,
-                    viewers: 0,
-                    title: 'Error loading data',
-                    thumbnail: `https://via.placeholder.com/150?text=${channelName}`
-                };
-            }
-        }
+      if (liveChannels.length > 0) {
+        const top = liveChannels.sort((a, b) => b.viewers - a.viewers)[0];
+        topStreamerName.textContent = top.name;
+        streamIframe.src = `https://player.kick.com/${top.name}?autoplay=true&muted=false`;
+      } else {
+        topStreamerName.textContent = "No live streams";
+        streamIframe.src = "";
+      }
+    }
 
-        // Update the top streamer display
-        function updateTopStreamer() {
-            if (liveChannels.length > 0) {
-                const topStreamer = liveChannels[0];
-                topStreamerName.textContent = topStreamer.name;
-                topStreamerViewers.querySelector('span').textContent = topStreamer.viewers.toLocaleString();
-                streamTitle.textContent = topStreamer.title;
-                
-                // Update the iframe with correct embed URL
-                const isFullscreen = streamContainer.classList.contains('fullscreen');
-                streamIframe.src = `https://player.kick.com/${topStreamer.name}?autoplay=true`;
-                
-                if (!isFullscreen) {
-                    streamIframe.onload = () => {
-                        streamPlaceholder.style.display = 'none';
-                    };
-                }
-            } else {
-                topStreamerName.textContent = 'No live channels';
-                topStreamerViewers.querySelector('span').textContent = '0';
-                streamTitle.textContent = 'Check back later for live streams';
-                streamIframe.src = '';
-                streamPlaceholder.style.display = 'flex';
-                streamPlaceholder.innerHTML = `
-                    <div class="text-center">
-                        <i class="fas fa-tv text-4xl mb-4 text-purple-400"></i>
-                        <p>No live streams currently</p>
-                    </div>
-                `;
-            }
-        }
+    // Initial and auto refresh every 30 minutes
+    updateTopStream();
+    setInterval(updateTopStream, 30 * 60 * 1000);
+  </script>
 
-        // Update the live channels list
-        function updateLiveChannelsList() {
-            liveChannelsContainer.innerHTML = '';
-            
-            if (liveChannels.length === 0) {
-                liveChannelsContainer.innerHTML = `
-                    <div class="col-span-full text-center py-8 text-gray-400">
-                        <i class="fas fa-tv text-4xl mb-4"></i>
-                        <p>No channels are currently live</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            liveChannels.slice(0, 8).forEach(channel => {
-                const channelCard = document.createElement('div');
-                channelCard.className = 'channel-card bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition cursor-pointer';
-                channelCard.innerHTML = `
-                    <div class="relative">
-                        <img src="${channel.thumbnail}?t=${Date.now()}" alt="${channel.name}" class="w-full h-32 object-cover">
-                        <div class="absolute bottom-2 left-2 bg-black bg-opacity-70 px-2 py-1 rounded text-xs">
-                            <i class="fas fa-eye mr-1"></i> ${channel.viewers.toLocaleString()}
-                        </div>
-                    </div>
-                    <div class="p-3">
-                        <h3 class="font-semibold truncate">${channel.name}</h3>
-                        <p class="text-gray-300 text-sm truncate">${channel.title}</p>
-                    </div>
-                `;
-                
-                channelCard.addEventListener('click', () => {
-                    // Set this channel as the top streamer
-                    liveChannels = [channel, ...liveChannels.filter(c => c.name !== channel.name)];
-                    updateTopStreamer();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-                
-                liveChannelsContainer.appendChild(channelCard);
-            });
-        }
-
-        // Update the last updated time
-        function updateLastUpdatedTime() {
-            const now = new Date();
-            lastUpdated.textContent = `Last updated: ${now.toLocaleTimeString()}`;
-        }
-
-        // Start the countdown timer
-        function startCountdown() {
-            clearInterval(countdownInterval);
-            countdownInterval = setInterval(() => {
-                countdownTime--;
-                
-                const minutes = Math.floor(countdownTime / 60);
-                const seconds = countdownTime % 60;
-                countdown.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                
-                if (countdownTime <= 0) {
-                    countdownTime = 30 * 60;
-                    updateStreamData();
-                }
-            }, 1000);
-        }
-
-        // Reset the countdown timer
-        function resetCountdown() {
-            countdownTime = 30 * 60;
-            startCountdown();
-        }
-
-        // Event listeners
-        refreshBtn.addEventListener('click', () => {
-            updateStreamData();
-        });
-
-        fullscreenBtn.addEventListener('click', () => {
-            streamContainer.classList.toggle('fullscreen');
-            
-            if (streamContainer.classList.contains('fullscreen')) {
-                fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
-                // Update the stream immediately when entering fullscreen
-                if (liveChannels.length > 0) {
-                    streamIframe.src = `https://kick.com/${liveChannels[0].name}/embed`;
-                    streamPlaceholder.style.display = 'none';
-                }
-            } else {
-                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
-            }
-        });
-
-        // Handle escape key to exit fullscreen
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && streamContainer.classList.contains('fullscreen')) {
-                streamContainer.classList.remove('fullscreen');
-                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
-            }
-        });
-
-        // Set up periodic updates with initial delay
-        setTimeout(() => {
-            updateStreamData();
-            setInterval(updateStreamData, updateInterval);
-        }, 1000);
-
-    </script>
 </body>
 </html>
