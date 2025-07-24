@@ -43,6 +43,21 @@
       backdrop-filter: none;
       background: none;
     }
+    #skipBtn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 1001;
+      font-size: 0.75rem;
+      opacity: 1;
+      color: #ffcaff;
+      text-shadow: 0 0 4px #ffbdfd;
+      white-space: nowrap;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px 16px;
+    }
     #topStreamerName {
       font-weight: bold;
       font-size: 0.75rem;
@@ -58,17 +73,6 @@
       text-shadow: 0 0 4px #ffbdfd;
       white-space: nowrap;
     }
-    #skipBtn {
-      font-size: 0.75rem;
-      opacity: 1;
-      color: #ffcaff;
-      text-shadow: 0 0 4px #ffbdfd;
-      white-space: nowrap;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-    }
     #controls button {
       background: none;
       border: none;
@@ -82,9 +86,9 @@
   <div id="controls" class="cursor-pointer transition-all" onclick="document.getElementById('fullscreenBtn').click()">
     <span id="topStreamerName">Loading...</span>
     <span id="timeDisplay" class="ml-2"></span>
-    <button id="skipBtn" class="ml-2">⏩</button>
     <button id="fullscreenBtn" class="hidden"><i class="fas fa-expand"></i></button>
   </div>
+  <button id="skipBtn">⏩</button>
 
   <div id="streamContainer" class="fullscreen">
     <iframe id="streamIframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
