@@ -78,7 +78,9 @@
                 </div>
             </div>
             <div id="streamContainer" class="stream-container relative">
-                <iframe id="streamIframe" class="stream-iframe w-full" src="" frameborder="0" allowfullscreen allow="autoplay"></iframe>
+                <div class="aspect-w-16 aspect-h-9">
+                    <iframe id="streamIframe" class="w-full h-full" src="" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
+                </div>
                 <div id="streamPlaceholder" class="absolute inset-0 bg-gray-700 flex items-center justify-center">
                     <div class="text-center">
                         <i class="fas fa-spinner fa-spin text-4xl mb-4 text-purple-400"></i>
@@ -100,14 +102,6 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            <div class="col-span-full bg-gray-800 rounded-lg p-4">
-                <h2 class="text-xl font-bold mb-4">All Tracked Channels</h2>
-                <div id="allChannels" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                    <!-- All channels will be inserted here -->
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -160,32 +154,61 @@
 
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', () => {
-            renderAllChannels();
             updateStreamData();
             startCountdown();
         });
 
-        // Fetch viewer data for all channels
+        // Fetch viewer data for all channels sequentially
         async function updateStreamData() {
             try {
                 refreshBtn.classList.add('refresh-animation');
-                const channelData = await Promise.all(channels.map(fetchChannelData));
+                liveChannels = [];
+                let processed = 0;
+                const total = channels.length;
                 
-                // Filter out offline channels and sort by viewer count
-                liveChannels = channelData
-                    .filter(channel => channel.viewers > 0)
-                    .sort((a, b) => b.viewers - a.viewers);
+                // Create progress indicator
+                const progress = document.createElement('div');
+                progress.className = 'absolute top-4 right-4 bg-gray-800 bg-opacity-90 px-3 py-1 rounded text-sm';
+                progress.innerHTML = `Loading: 0/${total}`;
+                document.body.appendChild(progress);
                 
+                // Process channels one by one with delay
+                for (const channel of channels) {
+                    try {
+                        const data = await fetchChannelData(channel);
+                        if (data.isLive) {
+                            liveChannels.push(data);
+                            // Update UI after each live channel is found
+                            if (liveChannels.length <= 8) {
+                                updateTopStreamer();
+                                updateLiveChannelsList();
+                            }
+                        }
+                        processed++;
+                        progress.innerHTML = `Loading: ${processed}/${total}`;
+                        
+                        // Small delay between requests to prevent rate limiting
+                        if (processed < total) {
+                            await new Promise(resolve => setTimeout(resolve, 200));
+                        }
+                    } catch (err) {
+                        console.error(`Error processing ${channel}:`, err);
+                        processed++;
+                    }
+                }
+                
+                // Final sort and update
+                liveChannels.sort((a, b) => b.viewers - a.viewers);
                 updateTopStreamer();
                 updateLiveChannelsList();
                 updateLastUpdatedTime();
-                
-                // Reset countdown
                 resetCountdown();
+                
             } catch (error) {
                 console.error('Error updating stream data:', error);
             } finally {
                 refreshBtn.classList.remove('refresh-animation');
+                document.querySelectorAll('.absolute.top-4.right-4').forEach(el => el.remove());
             }
         }
 
@@ -193,14 +216,27 @@
         async function fetchChannelData(channelName) {
             try {
                 const res = await fetch(`https://kick.com/api/v1/channels/${channelName}`);
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        return {
+                            name: channelName,
+                            viewers: 0,
+                            title: 'Channel not found',
+                            thumbnail: `https://via.placeholder.com/150?text=${channelName}`,
+                            isLive: false
+                        };
+                    }
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
                 
                 const data = await res.json();
+                const isLive = data.livestream?.is_live || false;
                 return {
                     name: channelName,
-                    viewers: data.livestream?.viewer_count || 0,
-                    title: data.livestream?.session_title || 'No title available',
-                    thumbnail: data.thumbnail?.url || `https://kick.com/${channelName}`
+                    viewers: isLive ? (data.livestream?.viewer_count || 0) : 0,
+                    title: isLive ? (data.livestream?.session_title || 'No title available') : 'Offline',
+                    thumbnail: data.user?.profile_pic || `https://kick.com/${channelName}`,
+                    isLive: isLive
                 };
             } catch (error) {
                 console.error(`Error fetching data for ${channelName}:`, error);
@@ -208,7 +244,7 @@
                     name: channelName,
                     viewers: 0,
                     title: 'Error loading data',
-                    thumbnail: `https://kick.com/${channelName}`
+                    thumbnail: `https://via.placeholder.com/150?text=${channelName}`
                 };
             }
         }
@@ -221,11 +257,15 @@
                 topStreamerViewers.querySelector('span').textContent = topStreamer.viewers.toLocaleString();
                 streamTitle.textContent = topStreamer.title;
                 
-                // Update the iframe
-                streamIframe.src = `https://kick.com/${topStreamer.name}/embed`;
-                streamIframe.onload = () => {
-                    streamPlaceholder.style.display = 'none';
-                };
+                // Update the iframe with correct embed URL
+                const isFullscreen = streamContainer.classList.contains('fullscreen');
+                streamIframe.src = `https://player.kick.com/${topStreamer.name}?autoplay=true&muted=false`;
+                
+                if (!isFullscreen) {
+                    streamIframe.onload = () => {
+                        streamPlaceholder.style.display = 'none';
+                    };
+                }
             } else {
                 topStreamerName.textContent = 'No live channels';
                 topStreamerViewers.querySelector('span').textContent = '0';
@@ -282,28 +322,6 @@
             });
         }
 
-        // Render all tracked channels
-        function renderAllChannels() {
-            allChannelsContainer.innerHTML = '';
-            
-            channels.forEach(channel => {
-                const channelItem = document.createElement('div');
-                channelItem.className = 'flex items-center gap-2 p-2 bg-gray-800 rounded hover:bg-gray-700 transition cursor-pointer';
-                channelItem.innerHTML = `
-                    <div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
-                        <img src="https://kick.com/${channel}" alt="${channel}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/50'">
-                    </div>
-                    <span class="truncate">${channel}</span>
-                `;
-                
-                channelItem.addEventListener('click', () => {
-                    window.open(`https://kick.com/${channel}`, '_blank');
-                });
-                
-                allChannelsContainer.appendChild(channelItem);
-            });
-        }
-
         // Update the last updated time
         function updateLastUpdatedTime() {
             const now = new Date();
@@ -343,6 +361,11 @@
             
             if (streamContainer.classList.contains('fullscreen')) {
                 fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
+                // Update the stream immediately when entering fullscreen
+                if (liveChannels.length > 0) {
+                    streamIframe.src = `https://player.kick.com/${liveChannels[0].name}?autoplay=true&muted=false`;
+                    streamPlaceholder.style.display = 'none';
+                }
             } else {
                 fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
             }
@@ -356,8 +379,12 @@
             }
         });
 
-        // Set up periodic updates
-        setInterval(updateStreamData, updateInterval);
+        // Set up periodic updates with initial delay
+        setTimeout(() => {
+            updateStreamData();
+            setInterval(updateStreamData, updateInterval);
+        }, 1000);
+
     </script>
 </body>
 </html>
