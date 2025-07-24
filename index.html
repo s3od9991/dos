@@ -12,7 +12,7 @@
       padding: 0;
       background: black;
       color: white;
-      font-family: sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       height: 100%;
       overflow: hidden;
     }
@@ -32,15 +32,31 @@
     }
     #controls {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 12px;
+      left: 12px;
       z-index: 1001;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 6px 12px;
-      border-radius: 6px;
+      padding: 8px 16px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 14px;
+      backdrop-filter: none;
+      background: none;
+    }
+    #topStreamerName {
+      font-weight: bold;
+      font-size: 0.75rem;
+      opacity: 1;
+      color: #ffcaff;
+      text-shadow: 0 0 4px #ffbdfd;
+      white-space: nowrap;
+    }
+    #timeDisplay {
+      font-size: 0.75rem;
+      opacity: 1;
+      color: #ffcaff;
+      text-shadow: 0 0 4px #ffbdfd;
+      white-space: nowrap;
     }
     #controls button {
       background: none;
@@ -52,9 +68,10 @@
 </head>
 <body>
 
-  <div id="controls">
-    <span id="topStreamerName" class="font-bold">Loading...</span>
-    <button id="fullscreenBtn"><i class="fas fa-expand"></i></button>
+  <div id="controls" class="cursor-pointer transition-all" onclick="document.getElementById('fullscreenBtn').click()">
+    <span id="topStreamerName">Loading...</span>
+    <span id="timeDisplay" class="ml-2"></span>
+    <button id="fullscreenBtn" class="hidden"><i class="fas fa-expand"></i></button>
   </div>
 
   <div id="streamContainer" class="fullscreen">
@@ -63,6 +80,115 @@
 
   <script>
     const streamIframe = document.getElementById("streamIframe");
+    
+const cuteAsciiArts = [
+    "(っ◕‿◕)っ",
+    "ʕ•́ᴥ•̀ʔっ",
+    "(づ｡◕‿‿◕｡)づ",
+    "ヽ(♡‿♡)ノ",
+    "(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧",
+    "⊂((・▽・))⊃",
+    "ヾ(＾-＾)ノ",
+    "(ﾉ´ヮ`)ﾉ*: ･ﾟ",
+    "(◠‿◠✿)",
+    "(｡♥‿♥｡)",
+    "｡^‿^｡",
+    "(≧◡≦)",
+    "(๑˃ᴗ˂)ﻭ",
+    "٩(◕‿◕｡)۶",
+    "(ღ✪v✪)ღ",
+    "o(≧▽≦)o",
+    "(っˆڡˆς)",
+    "(*≧ω≦*)",
+    "(*^ω^*)",
+    "ฅ^•ﻌ•^ฅ",
+    "(=^-ω-^=)",
+    "(*≧▽≦)",
+    "(=^･^=)",
+    "(・ω・)",
+    "(^・ω・^ )",
+    "(^人^)",
+    "( ´ ▽ ` )ﾉ",
+    "(*^▽^*)",
+    "ヽ(o＾▽＾o)ノ",
+    "o(〃＾▽＾〃)o",
+    "(≧◡≦) ♡",
+    "♡(˃͈ દ ˂͈ ༶ )",
+    "(｡♥‿♥｡)",
+    "(=^-ω-^=)",
+    "(≧◡≦)",
+    "ʕ •ᴥ•ʔ",
+    "(*≧∀≦*)",
+    "(｡♥‿♥｡)",
+    "(≧◡≦)v",
+    "(*≧▽≦)",
+    "(＾▽＾)",
+    "(⌒‿⌒)",
+    "(*≧ω≦)",
+    "(´｡• ᵕ •｡`)",
+    "(。U⁄ ⁄ω⁄ ⁄ U。)",
+    "（＾・ω・＾❁）",
+    "٩(๑❛ᴗ❛๑)۶",
+    "(*≧︶≦))(￣▽￣* )ゞ",
+    "(つ≧▽≦)つ",
+    "(*・∀・*)人(*・∀・*)",
+    "(ﾉ≧∀≦)ﾉ",
+    "ヽ(*⌒▽⌒*)ﾉ",
+    "٩(｡•́‿•̀｡)۶",
+    "( ˘ ³˘)♥",
+    "(灬º‿º灬)♡",
+    "( ˘⌣˘)♡(˘⌣˘ )",
+    "(つω`｡)",
+    "(〃￣ω￣〃ゞ",
+    "(つ≧▽≦)つ",
+    "(●´ω｀●)",
+    "(＾◡＾)",
+    "(♡°▽°♡)",
+    "(*≧ω≦)ﾉ",
+    "｡ﾟ(TヮT)ﾟ｡",
+    "(´｡• ω •｡`)",
+    "(⁄ ⁄•⁄ω⁄•⁄ ⁄)",
+    "( •⌄• ू )✧",
+    "(つ✧ω✧)つ",
+    "(o^▽^o)",
+    "〜(꒪꒳꒪)〜",
+    "(°◡°♡).:｡",
+    "(人*´∀｀)｡*ﾟ+",
+    "٩(♡ε♡ )۶",
+    "(∩^o^)⊃━☆",
+    "(∩˃o˂∩)♡",
+    "(๑♡3♡๑)",
+    "⁽⁽ଘ( ˊᵕˋ )ଓ⁾⁾",
+    "(੭ु｡╹▿╹｡)੭ु⁾⁾",
+    "(｡♥‿♥｡)",
+    "(=^ ◡ ^=)",
+    "ฅ(＾・ω・＾ฅ)",
+    "(*≧∀≦*)",
+    "(ᗒᗨᗕ)",
+    "(U ᵕ U❁)",
+    "(•ө•)♡",
+    "(*꒦ິ꒳꒦ີ)",
+    "٩(๛ ˘ ³˘)۶♥",
+    "( ˘▽˘)っ♨",
+    "(づ｡◕‿‿◕｡)づ",
+    "(＾・ω・＾❁)",
+    "(◍•ᴗ•◍)❤",
+    "(>̯-̮<̯)",
+    "(๑˘︶˘๑)",
+    "(๑˃ᴗ˂)ﻭ",
+    "(ﾉ´ヮ`)ﾉ*: ･ﾟ✧",
+    "(✿╹◡╹)",
+    "(´▽`ʃ♡ƪ)",
+    "(*´∇｀*)",
+    "✿♥‿♥✿",
+    "(｡♥‿♥｡)ﾉ♡",
+    "✧*｡٩(ˊωˋ*)و✧*｡"
+];
+
+
+    function getRandomAsciiArt() {
+        return cuteAsciiArts[Math.floor(Math.random() * cuteAsciiArts.length)];
+    }
 
     const channels = [
       "ac7tionman", "Adinross", "abz", "asianandy", "babyhaze69", "bennymack", 
@@ -106,9 +232,16 @@
       }
     }
 
+    function updateTime() {
+      const now = new Date();
+      timeDisplay.textContent = `${now.toLocaleString()} ${getRandomAsciiArt()}`;
+    }
+
     // Initial and auto refresh every 30 minutes
     updateTopStream();
+    updateTime();
     setInterval(updateTopStream, 30 * 60 * 1000);
+    setInterval(updateTime, 1000);
   </script>
 
 </body>
